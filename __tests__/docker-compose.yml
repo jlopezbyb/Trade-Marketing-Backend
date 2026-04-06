@@ -1,0 +1,15 @@
+
+services:
+  database_test:
+      image: bitnami/mysql
+      container_name: database_test
+      restart: always
+      environment:
+        MYSQL_ROOT_USER: ${DB_USER}
+        MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+        MYSQL_DATABASE: ${DB_NAME}
+      ports:
+        - ${DB_PORT}:3306
+      volumes:
+        - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+

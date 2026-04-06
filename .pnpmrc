@@ -1,0 +1,13 @@
+# pnpm configuration file
+
+# Use strict peer dependencies (recommended for monorepos)
+strict-peer-dependencies=false
+
+# Auto-install peer dependencies
+auto-install-peers=true
+
+# Use lockfile version 5.4 (compatible with most tools)
+lockfile-only=false
+
+# Enable symlink mode (fastest)
+node-linker=symlink

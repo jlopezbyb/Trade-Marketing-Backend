@@ -1,0 +1,11 @@
+node_modules
+coverage
+
+.env
+.vscode/
+.idea
+
+build/
+
+.scannerwork
+/logs

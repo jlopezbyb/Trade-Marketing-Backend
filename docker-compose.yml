@@ -1,0 +1,45 @@
+services:
+  database-trade-marketing:
+    image: postgres:14.4
+    container_name: trade-marketing-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - 5432:5432
+    volumes:
+      - trade-marketing-db:/var/lib/postgresql/data
+      - ./db/postgres.init.sql:/docker-entrypoint-initdb.d/postgres.init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      timeout: 20s
+      retries: 10
+
+  server-trade-marketing:
+    build: .
+    container_name: server-trade-marketing
+    image: trade-marketing:0.7.5
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: curl --fail http://localhost:3500/api/v1/health || exit 1
+      interval: 1m30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+    ports:
+      - 3500:3500
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    depends_on:
+      database-trade-marketing:
+        condition: service_healthy
+
+volumes:
+  trade-marketing-db:

@@ -1,0 +1,5 @@
+allowBuilds:
+  '@swc/core': true
+  bcrypt: true
+  postinstall-postinstall: true
+  sqlite3: true

@@ -1,0 +1,43 @@
+name: PRODUCCION - Build and Push Docker Image to ECR Produccion
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+          aws-region: ${{ secrets.AWS_REGION_PROD }}
+
+      - name: Copy .env.example to .env
+        run: cp .env.example .env
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.AWS_ACCOUNT_ID_PROD }}.dkr.ecr.${{ secrets.AWS_REGION_PROD }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME_PROD }}:latest .
+
+      - name: Push Docker image to ECR
+        run: |
+          docker push ${{ secrets.AWS_ACCOUNT_ID_PROD }}.dkr.ecr.${{ secrets.AWS_REGION_PROD}}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME_PROD }}:latest
+
+      - name: Force new deployment in ECS service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER_NAME_PROD }} \
+            --service ${{ secrets.ECS_SERVICE_NAME_PROD }} \
+            --force-new-deployment

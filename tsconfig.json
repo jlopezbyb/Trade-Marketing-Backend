@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2022",
+    "alwaysStrict": true,
+    "outDir": "build",
+    "allowJs": false,
+    "sourceMap": true,
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "lib": ["ES2022"],
+    "skipLibCheck": true,
+    "noImplicitOverride": true,
+    "baseUrl": "./",
+    "strict": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@src/*": ["src/*"],
+      "@server/*": ["src/server/*"],
+      "@config/*": ["src/server/config/*"],
+      "@contexts/*": ["src/contexts/*"],
+    },
+    "forceConsistentCasingInFileNames": true,
+  },
+  "include": ["src/**/*.ts", "src/contexts/auth copy/infrastructure/utils/auth-success.js"],
+  "exclude": ["node_modules", "src/**/*.test.ts"]
+}
