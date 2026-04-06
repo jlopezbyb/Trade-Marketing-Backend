@@ -55,20 +55,14 @@ export class AuthEmployeeController {
 
   async entraEmployeeLogin(request: Request, response: Response, next: NextFunction) {
     try {
-      const profile = request.user as {
-        emails?: string[];
-        email?: string;
-        nameID?: string;
-        [key: string]: any;
-      };
-
-      const email = profile?.emails?.[0] || profile?.email || profile?.nameID;
+      const entraPayload = (request as any).entraIdPayload;
+      const email = entraPayload?.preferred_username || entraPayload?.email;
 
       if (!email) {
-        throw new Error('No se pudo obtener el email del perfil Entra ID');
+        throw new Error('No se pudo obtener el email del token Entra ID');
       }
 
-      console.log('📥 Email extraído del perfil Entra ID:', email);
+      console.log('📥 Email extraído del token Entra ID:', email);
 
       const { user, employeeCode, assignmentId } = await this.loginUseCase.entraLogin({ email });
 
@@ -80,38 +74,8 @@ export class AuthEmployeeController {
       }
       setActiveToken(user.email, 'employee', token);
 
-      const encryptedToken = encrypt(token);
-      const encryptedRefreshToken = encrypt(refreshToken);
-      this.setAuthCookies(response, encryptedToken, encryptedRefreshToken);
-
-      const nonce = response.locals.nonce;
-      response.status(200).send(`
-        <!DOCTYPE html>
-        <html lang="es">
-          <head>
-            <meta charset="UTF-8">
-            <title>Autenticación Exitosa</title>
-            <script nonce="${nonce}">
-              window.__SAML_TOKEN__ = '${token}';
-              window.__SAML_REFRESH__ = '${refreshToken}';
-            </script>
-            <script src="/scripts/auth.success.js" nonce="${nonce}"></script>
-            <style nonce="${nonce}">
-              body {
-                font-family: sans-serif;
-                text-align: center;
-                margin-top: 3rem;
-              }
-            </style>
-          </head>
-          <body>
-            <h1>✅ Autenticación exitosa. Cerrando ventana...</h1>
-            <noscript>
-              <p>Este proceso requiere JavaScript para completarse. Puede cerrar esta ventana.</p>
-            </noscript>
-          </body>
-        </html>
-      `);
+      this.setAuthCookies(response, token, refreshToken);
+      response.status(200).json({ message: 'Welcome!', token, refreshToken });
     } catch (error) {
       next(error);
     }

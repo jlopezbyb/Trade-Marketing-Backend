@@ -7,7 +7,6 @@ import helmet from 'helmet';
 import crypto from 'crypto';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
-import session from 'express-session';
 
 import { config } from '@src/server/config/env/envs';
 import WinstonLogger from '@contexts/shared/infrastructure/WinstonLogger';
@@ -18,8 +17,6 @@ import '@contexts/shared/infrastructure/models/relations';
 import { handleErrors } from '@src/server/middleware/handle-errors';
 import routes from '@src/contexts/shared/infrastructure/routes/index';
 import { RequestHandler } from 'express';
-import '../contexts/auth/infrastructure/utils/entra-strategy';
-import passport from 'passport';
 import path from 'node:path';
 
 export class Server {
@@ -107,20 +104,6 @@ export class Server {
     // 🍪 Cookies
     this.app.use(cookieParser() as unknown as RequestHandler);
 
-    // 🔐 Sesión para OIDC
-    this.app.use(
-      session({
-        secret: config.JWT.SECRET,
-        resave: false,
-        saveUninitialized: false,
-        cookie: {
-          secure: false, // En desarrollo, false; en producción debe ser true con HTTPS
-          httpOnly: true,
-          maxAge: 24 * 60 * 60 * 1000 // 24 horas
-        }
-      })
-    );
-
     // // 🔐 CSRF Protection
     // this.app.use((req, res, next) => {
     //   const token = req.cookies['csrfToken'];
@@ -135,8 +118,6 @@ export class Server {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: false }));
     this.app.use(morgan(config.APP.LOG_LEVEL));
-    this.app.use(passport.initialize() as unknown as RequestHandler);
-    this.app.use(passport.session() as unknown as RequestHandler);
 
     // 📂 Archivos públicos
     this.app.use(express.static(path.resolve(process.cwd(), 'public')));

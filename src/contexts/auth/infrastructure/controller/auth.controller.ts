@@ -114,57 +114,31 @@ export class AuthController {
 
   async entraLogin(request: Request, response: Response, next: NextFunction) {
     try {
-      const profile = request.user as Record<string, any>;
-      const email = profile?.emails?.[0] || profile?.email || profile?.nameID;
+      const entraPayload = (request as any).entraIdPayload;
+      const email = entraPayload?.preferred_username || entraPayload?.email;
 
-      if (!email) throw new Error('No se pudo obtener el email del perfil Entra ID');
+      if (!email) throw new Error('No se pudo obtener el email del token Entra ID');
 
       const { user, role } = await this.loginUseCase.entraLogin({ email });
-
-      // 🔑 Inferimos el tipo por la ruta del callback Entra
-      const isEmployee = request.path.includes('/employee/');
-      const userType: 'admin' | 'employee' = isEmployee ? 'employee' : 'admin';
 
       const payload = {
         user: user.username,
         role: role.name,
-        type: userType,
+        type: 'admin' as const,
         resources: role.resources.filter(r => r.canAccess).map(r => r.slug)
       };
 
       const { token, refreshToken } = createToken(payload);
 
       // 🔐 Política de single-session
-      const oldToken = getActiveToken(user.username, userType);
+      const oldToken = getActiveToken(user.username, 'admin');
       if (oldToken && oldToken !== token) {
         addTokenToBlacklist(oldToken);
       }
-      setActiveToken(user.username, userType, token); // 👈 REGISTRA LA SESIÓN ACTIVA
+      setActiveToken(user.username, 'admin', token);
 
       this.setAuthCookies(response, token, refreshToken);
-
-      const nonce = response.locals.nonce;
-      response.status(200).send(`
-      <!DOCTYPE html>
-      <html lang="es">
-        <head>
-          <meta charset="UTF-8">
-          <title>Autenticación Exitosa</title>
-          <script nonce="${nonce}">
-            window.__SAML_TOKEN__ = '${token}';
-            window.__SAML_REFRESH__ = '${refreshToken}';
-          </script>
-          <script src="/scripts/auth.success.js" nonce="${nonce}"></script>
-          <style nonce="${nonce}">
-            body { font-family: sans-serif; text-align: center; margin-top: 3rem; }
-          </style>
-        </head>
-        <body>
-          <h1>✅ Autenticación exitosa. Cerrando ventana...</h1>
-          <noscript><p>Puede cerrar esta ventana.</p></noscript>
-        </body>
-      </html>
-    `);
+      response.status(200).json({ message: 'Welcome!', token, refreshToken });
     } catch (error) {
       next(error);
     }

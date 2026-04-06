@@ -33,9 +33,6 @@ export const config = {
   },
   ENTRA_ID: {
     CLIENT_ID: process.env.ENTRA_CLIENT_ID,
-    CLIENT_SECRET: process.env.ENTRA_CLIENT_SECRET,
-    TENANT_ID: process.env.ENTRA_TENANT_ID,
-    CALLBACK_URL: process.env.ENTRA_CALLBACK_URL,
-    EMPLOYEE_CALLBACK_URL: process.env.ENTRA_EMPLOYEE_CALLBACK_URL
+    TENANT_ID: process.env.ENTRA_TENANT_ID
   }
 };

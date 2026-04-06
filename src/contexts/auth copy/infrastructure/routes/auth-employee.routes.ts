@@ -2,22 +2,21 @@ import { Router } from 'express';
 import { authController } from '../dependencies';
 
 import { validateAuth } from '@src/server/middleware/auth-middleware';
-import passport from 'passport';
+import { validateEntraIdJwt } from '@src/server/middleware/validate-entra-jwt';
 
 import rateLimit from 'express-rate-limit';
 
 const routes = Router();
 
-const samlCallbackRateLimiter = rateLimit({
+const entraRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // max 100 requests per windowMs
 });
 
-routes.get('/employee/entra/login', passport.authenticate('entra-employee', { failureRedirect: '/login' }));
 routes.post(
-  '/employee/entra/callback',
-  samlCallbackRateLimiter,
-  passport.authenticate('entra-employee', { session: false }),
+  '/employee/entra/login',
+  entraRateLimiter,
+  validateEntraIdJwt,
   authController.entraEmployeeLogin.bind(authController)
 );
 
