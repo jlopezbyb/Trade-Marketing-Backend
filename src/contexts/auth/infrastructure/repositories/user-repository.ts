@@ -1,138 +1,59 @@
-import { v4 as uuid } from 'uuid';
-import { UserEntity } from '@src/contexts/auth/core/entities/user-entity';
+import { UserEntity, UserRol } from '@src/contexts/auth/core/entities/user-entity';
 import { UserRepository } from '@src/contexts/auth/core/repository/user-repository';
 
 import { UserModel } from '@src/contexts/shared/infrastructure/models/auth/user.model';
-import { RoleModel } from '@src/contexts/shared/infrastructure/models/auth/role.model';
-import { Op } from 'sequelize';
 
 export class MySQLSequelizeUserRepository implements UserRepository {
-  async create(user: {
-    name: string;
-    email: string;
-    username: string;
-    password: string;
-    status: 'ACTIVO' | 'INACTIVO';
-    phone: string;
-    role: string;
-  }): Promise<void> {
-    // Buscar usuario eliminado con el mismo email o username
-    const deletedUser = await UserModel.findOne({
-      where: {
-        [Op.or]: [{ email: user.email }, { username: user.username }]
-      },
-      paranoid: false // Incluye registros eliminados
-    });
-
-    if (deletedUser) {
-      // Restaurar el usuario eliminado
-      await deletedUser.restore();
-      // Actualizar sus datos
-      await deletedUser.update({
-        ...user,
-        status: 'ACTIVO',
-        roleId: user.role
-      });
-      return;
-    }
-
-    // Si no existe un usuario eliminado, crear uno nuevo
-    const userEntity = UserEntity.fromPrimitives({ ...user, id: uuid() });
-    await UserModel.create({ ...userEntity, roleId: userEntity.role });
+  async create(user: { email: string; employee_code: string; nombre: string; rol: UserRol }): Promise<void> {
+    await UserModel.create(user);
   }
 
   async update(user: {
-    id: string;
-    name: string;
-    username: string;
+    id: number;
     email: string;
-    password: string;
-    status: 'ACTIVO' | 'INACTIVO';
-    phone: string;
-    role: string;
+    employee_code: string;
+    nombre: string;
+    rol: UserRol;
+    activo: boolean;
   }): Promise<void> {
     await UserModel.update(
       {
-        name: user.name,
-        username: user.username, // ✅ ¡aquí está el fix!
         email: user.email,
-        status: user.status,
-        phone: user.phone,
-        role_id: user.role
+        employee_code: user.employee_code,
+        nombre: user.nombre,
+        rol: user.rol,
+        activo: user.activo
       },
-      {
-        where: { id: user.id },
-        fields: ['name', 'username', 'email', 'status', 'phone', 'role_id']
-      }
+      { where: { id: user.id } }
     );
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: number): Promise<void> {
     const user = await UserModel.findByPk(id);
-    if (!user) {
-      throw new Error('User not found');
-    }
+    if (!user) throw new Error('User not found');
     await user.destroy();
   }
 
-  async getById(id: string): Promise<UserEntity | null> {
-    const userDatabase = await UserModel.findOne({
-      where: { id },
-      attributes: { exclude: ['password'] },
-      include: [
-        {
-          model: RoleModel,
-          as: 'role',
-          attributes: ['id', 'name', 'description', 'status']
-        }
-      ]
-      // No necesitas agregar deleted_at: null porque paranoid: true lo maneja
-    });
-
+  async getById(id: number): Promise<UserEntity | null> {
+    const userDatabase = await UserModel.findByPk(id);
     if (!userDatabase) return null;
-
-    const plainData = userDatabase.get({ plain: true });
-    return UserEntity.fromPrimitives({ ...plainData, role: plainData.role });
+    return UserEntity.fromPrimitives(userDatabase.get({ plain: true }));
   }
 
   async getAll(limit: number = 20, page: number = 1): Promise<{ data: UserEntity[]; pageCounter: number }> {
-    const usersCounter = await UserModel.count(); // Paranoid excluye automáticamente los eliminados
+    const usersCounter = await UserModel.count();
     const allPages = Math.ceil(usersCounter / limit);
     const offset = (page - 1) * limit;
 
-    const usersDatabase = await UserModel.findAll({
-      offset,
-      limit,
-      attributes: { exclude: ['password'] },
-      include: [
-        {
-          model: RoleModel,
-          as: 'role',
-          attributes: ['id', 'name', 'description', 'status'],
-          order: [['email', 'ASC']]
-        }
-      ]
-    });
-
+    const usersDatabase = await UserModel.findAll({ offset, limit, order: [['email', 'ASC']] });
     const users = usersDatabase.map(user => UserEntity.fromPrimitives(user.get({ plain: true })));
 
-    return {
-      data: users,
-      pageCounter: allPages
-    };
+    return { data: users, pageCounter: allPages };
   }
 
-  async getByEmailOrUsername(email: string, username: string): Promise<UserEntity | null> {
-    const userDatabase = await UserModel.findOne({
-      where: {
-        [Op.or]: [{ email }, { username }]
-      },
-      paranoid: false // Incluye registros eliminados
-    });
-
+  async getByEmail(email: string): Promise<UserEntity | null> {
+    const userDatabase = await UserModel.findOne({ where: { email } });
     if (!userDatabase) return null;
-
-    const plainData = userDatabase.get({ plain: true });
-    return UserEntity.fromPrimitives({ ...plainData, role: plainData.role });
+    return UserEntity.fromPrimitives(userDatabase.get({ plain: true }));
   }
 }

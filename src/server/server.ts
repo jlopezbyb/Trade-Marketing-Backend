@@ -41,7 +41,8 @@ export class Server {
       'https://parqueosrrhh.claro.com.gt',
       'https://admin.parqueosrrhh.claro.com.gt',
       'https://claro-com-gt.access.mcas.ms',
-      'https://login.microsoftonline.com'
+      'https://login.microsoftonline.com',
+      'https://localhost:3000'
     ];
 
     const corsOptions: cors.CorsOptions = {

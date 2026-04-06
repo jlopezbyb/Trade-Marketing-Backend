@@ -1,28 +1,17 @@
-import { RoleEntity } from '../entities/role-entity';
-import { UserEntity } from '../entities/user-entity';
+import { UserEntity, UserRol } from '../entities/user-entity';
 
 export interface UserRepository {
-  create(user: {
-    name: string;
-    email: string;
-    username: string;
-    password: string;
-    status: 'ACTIVO' | 'INACTIVO';
-    phone: string;
-    role: RoleEntity | string;
-  }): Promise<void>;
+  create(user: { email: string; employee_code: string; nombre: string; rol: UserRol }): Promise<void>;
   update(user: {
-    name: string;
-    username: string;
+    id: number;
     email: string;
-    password: string;
-    status: 'ACTIVO' | 'INACTIVO';
-    phone: string;
-    id: string;
-    role: RoleEntity | string;
+    employee_code: string;
+    nombre: string;
+    rol: UserRol;
+    activo: boolean;
   }): Promise<void>;
-  delete(id: string): Promise<void>;
-  getById(id: string): Promise<UserEntity | null>;
+  delete(id: number): Promise<void>;
+  getById(id: number): Promise<UserEntity | null>;
   getAll(limit: number, page: number): Promise<{ data: UserEntity[]; pageCounter: number }>;
-  getByEmailOrUsername(email: string, username: string): Promise<UserEntity | null>;
+  getByEmail(email: string): Promise<UserEntity | null>;
 }

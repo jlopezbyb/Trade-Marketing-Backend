@@ -1,7 +1,11 @@
 import { Model } from 'sequelize';
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../../../../../server/config/database/sequelize';
-import { LocationStatus } from '@src/contexts/location/core/entities/location-entity';
+
+enum LocationStatus {
+  ACTIVE = 'ACTIVO',
+  INACTIVE = 'INACTIVO'
+}
 
 export class LocationModel extends Model {}
 

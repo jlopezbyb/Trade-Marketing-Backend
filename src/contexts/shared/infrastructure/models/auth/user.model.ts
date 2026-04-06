@@ -7,50 +7,42 @@ export class UserModel extends Model {}
 UserModel.init(
   {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.BIGINT,
       primaryKey: true,
-      unique: true,
-      allowNull: false
-    },
-    username: {
-      type: DataTypes.STRING(35),
-      unique: true,
-      allowNull: false
-    },
-    name: {
-      type: DataTypes.STRING(50),
-      allowNull: false
+      autoIncrement: true
     },
     email: {
+      type: DataTypes.STRING(255),
+      unique: true,
+      allowNull: false
+    },
+    employee_code: {
       type: DataTypes.STRING(50),
+      unique: true,
       allowNull: false
     },
-    phone: {
-      type: DataTypes.STRING(15),
+    nombre: {
+      type: DataTypes.STRING(150),
       allowNull: false
     },
-    password: {
-      type: DataTypes.STRING(50)
-    },
-    roleId: {
-      type: DataTypes.UUID,
-      references: {
-        model: 'role',
-        key: 'id'
-      }
-    },
-    status: {
-      type: DataTypes.ENUM('ACTIVO', 'INACTIVO'),
-      defaultValue: 'ACTIVO',
+    rol: {
+      type: DataTypes.STRING(20),
       allowNull: false
+    },
+    activo: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+      allowNull: false
+    },
+    imagen_url: {
+      type: DataTypes.TEXT
     }
   },
   {
     sequelize,
     underscored: true,
-    paranoid: true,
-    modelName: 'user',
-    tableName: 'user',
+    modelName: 'usuario',
+    tableName: 'usuarios',
     updatedAt: 'updated_at',
     createdAt: 'created_at'
   }

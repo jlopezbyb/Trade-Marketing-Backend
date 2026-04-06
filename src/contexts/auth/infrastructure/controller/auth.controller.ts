@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import { LoginUseCase } from '@src/contexts/auth/application/use-cases/auth/login';
-import { RefreshTokenUseCase } from '@src/contexts/auth/application/use-cases/auth/refresh-token';
 import { addTokenToBlacklist } from '@src/server/security/token-blacklist';
 
 import { createToken } from '../utils/jwt-utils';
@@ -9,10 +8,7 @@ import { getPayload } from '../utils/jwt-utils';
 import { getActiveToken, invalidateToken, setActiveToken } from '@src/server/security/session-manager';
 
 export class AuthController {
-  constructor(
-    private readonly loginUseCase: LoginUseCase,
-    private readonly refreshTokenUseCase: RefreshTokenUseCase
-  ) {}
+  constructor(private readonly loginUseCase: LoginUseCase) {}
 
   private setAuthCookies(response: Response, token: string, refresh: string) {
     response
@@ -21,46 +17,15 @@ export class AuthController {
         secure: true,
         sameSite: 'none',
         path: '/',
-        domain: '.claro.com.gt'
+        domain: '.localhost.com'
       })
       .cookie('refresh_token', refresh, {
         httpOnly: false,
         secure: true,
         sameSite: 'none',
         path: '/',
-        domain: '.claro.com.gt'
+        domain: '.localhost.com'
       });
-  }
-
-  async login(request: Request, response: Response, next: NextFunction) {
-    const { username, password } = request.body;
-
-    try {
-      const { user, role } = await this.loginUseCase.run({
-        username,
-        password
-      });
-
-      const payload = {
-        user: user.username,
-        role: role.name,
-        type: 'admin',
-        resources: role.resources.filter(r => r.canAccess).map(r => r.slug)
-      };
-
-      const { token, refreshToken } = createToken(payload);
-
-      const oldToken = getActiveToken(user.username, 'admin');
-      if (oldToken && oldToken !== token) {
-        addTokenToBlacklist(oldToken); // Invalida sesión previa
-      }
-      setActiveToken(user.username, 'admin', token);
-
-      this.setAuthCookies(response, token, refreshToken);
-      response.status(200).json({ message: 'Welcome!' });
-    } catch (error) {
-      next(error);
-    }
   }
 
   async refreshToken(request: Request, response: Response, next: NextFunction) {
@@ -72,22 +37,19 @@ export class AuthController {
       const userData = getPayload(refresh);
       if (!userData?.user) return response.status(401).json({ message: 'Refresh token inválido' });
 
-      const { role, user } = await this.refreshTokenUseCase.run(userData.user);
-
-      // Si tu payload original traía type, úsalo; si no, infiérelo (admin/employee)
-      const inferredType = request.cookies?.['token_employee'] ? 'employee' : userData.type ?? 'admin';
+      const { user } = await this.loginUseCase.entraLogin({ email: userData.user });
 
       const payload = {
-        user: user.username,
-        role: role.name,
-        type: inferredType, // 👈 OBLIGATORIO
-        resources: role.resources.filter(r => r.canAccess).map(r => r.slug)
+        user: user.email,
+        role: user.rol,
+        type: user.rol,
+        employeeCode: user.employee_code,
+        nombre: user.nombre
       };
 
       const { token, refreshToken } = createToken(payload);
 
-      // Actualiza sesión activa (opcional pero recomendado)
-      setActiveToken(user.username, inferredType, token);
+      setActiveToken(user.email, user.rol, token);
 
       this.setAuthCookies(response, token, refreshToken);
       response.status(200).json({ message: 'Success!' });
@@ -112,6 +74,20 @@ export class AuthController {
     }
   }
 
+  me(req: Request, res: Response, next: NextFunction) {
+    try {
+      const payload = (req as any).user;
+      res.status(200).json({
+        user: payload.user,
+        role: payload.role,
+        employeeCode: payload.employeeCode,
+        nombre: payload.nombre
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async entraLogin(request: Request, response: Response, next: NextFunction) {
     try {
       const entraPayload = (request as any).entraIdPayload;
@@ -119,26 +95,26 @@ export class AuthController {
 
       if (!email) throw new Error('No se pudo obtener el email del token Entra ID');
 
-      const { user, role } = await this.loginUseCase.entraLogin({ email });
+      const { user } = await this.loginUseCase.entraLogin({ email });
 
       const payload = {
-        user: user.username,
-        role: role.name,
-        type: 'admin' as const,
-        resources: role.resources.filter(r => r.canAccess).map(r => r.slug)
+        user: user.email,
+        role: user.rol,
+        type: user.rol,
+        employeeCode: user.employee_code,
+        nombre: user.nombre
       };
 
       const { token, refreshToken } = createToken(payload);
 
-      // 🔐 Política de single-session
-      const oldToken = getActiveToken(user.username, 'admin');
+      const oldToken = getActiveToken(user.email, user.rol);
       if (oldToken && oldToken !== token) {
         addTokenToBlacklist(oldToken);
       }
-      setActiveToken(user.username, 'admin', token);
+      setActiveToken(user.email, user.rol, token);
 
       this.setAuthCookies(response, token, refreshToken);
-      response.status(200).json({ message: 'Welcome!', token, refreshToken });
+      response.status(200).json({ message: 'Welcome!', token, refreshToken, role: user.rol });
     } catch (error) {
       next(error);
     }

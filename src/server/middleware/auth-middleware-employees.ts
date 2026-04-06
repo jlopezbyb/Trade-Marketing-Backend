@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../../contexts/shared/infrastructure/exception/AppError';
-import { getPayload, validateToken } from '@src/contexts/auth copy/infrastructure/utils/jwt-utils';
+import { getPayload, validateToken } from '@src/contexts/auth/infrastructure/utils/jwt-utils';
 import { isTokenBlacklisted } from '../security/token-blacklist';
 import { getActiveToken } from '../security/session-manager';
 
@@ -31,7 +31,7 @@ export const validateAuth =
       }
       request.user = payload;
 
-      const activeToken = getActiveToken(payload.user, payload.type === 'employee' ? 'employee' : 'admin');
+      const activeToken = getActiveToken(payload.user, String(payload.type));
       if (activeToken !== token) {
         throw new AppError('SESSION_INVALIDATED', 401, 'Esta sesión ha sido reemplazada por otro inicio de sesión.', true);
       }

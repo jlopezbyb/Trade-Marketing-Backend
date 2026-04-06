@@ -1,6 +1,22 @@
 import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../../../../../server/config/database/sequelize';
-import { BenefitTypeEnum, SlotStatusEnum, SlotTypeEnum } from '@src/contexts/location/core/entities/slot-entity';
+
+enum SlotStatusEnum {
+  ACTIVE = 'DISPONIBLE',
+  INACTIVE = 'NO DISPONIBLE',
+  OCCUPIED = 'OCUPADO'
+}
+
+enum SlotTypeEnum {
+  SIMPLE = 'SIMPLE',
+  MULTIPLE = 'MULTIPLE'
+}
+
+enum BenefitTypeEnum {
+  NO_COST = 'SIN_COSTO',
+  DISCOUNT = 'DESCUENTO',
+  COMPLEMENT = 'COMPLEMENTO'
+}
 
 export class SlotModel extends Model {}
 
