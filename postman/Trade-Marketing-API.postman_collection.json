@@ -1,0 +1,681 @@
+{
+  "info": {
+    "_postman_id": "trade-marketing-api-collection",
+    "name": "Trade Marketing API",
+    "description": "API Backend para Trade Marketing - Productos Alimenticios Centroamericanos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (Entra ID)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) pm.environment.set('token', json.token);",
+                  "    if (json.refreshToken) pm.environment.set('refreshToken', json.refreshToken);",
+                  "    if (json.role) pm.environment.set('userRole', json.role);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{entraIdToken}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Envía el token de Microsoft Entra ID en el header Authorization. El backend lo valida con JWKS y retorna un JWT propio."
+          },
+          "response": []
+        },
+        {
+          "name": "Me (Current User)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Retorna los datos del usuario autenticado desde el JWT."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const cookies = pm.response.headers.filter(h => h.key === 'Set-Cookie');",
+                  "    // Tokens se setean via cookies",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Cookie", "value": "refresh_token={{refreshToken}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Cookie", "value": "token={{token}};refresh_token={{refreshToken}}", "type": "text" }],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar Clientes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Listar clientes. Usa ?usuario_id=X para filtrar por usuario asignado (field users)."
+          },
+          "response": []
+        },
+        {
+          "name": "Listar Clientes (por usuario)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes?usuario_id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes"],
+              "query": [{ "key": "usuario_id", "value": "1" }]
+            },
+            "description": "Listar solo los clientes asignados a un usuario específico."
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Cliente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tienda Ejemplo\",\n  \"cliente_code\": \"CLI-001\",\n  \"direccion\": \"Zona 10, Ciudad de Guatemala\",\n  \"telefono\": \"5555-1234\",\n  \"contacto\": \"Juan Pérez\",\n  \"email\": \"tienda@ejemplo.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Cliente",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Tienda Actualizada\",\n  \"telefono\": \"5555-9999\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/clientes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Cliente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/clientes/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["clientes", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Categorias",
+      "item": [
+        {
+          "name": "Listar Categorias",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["categorias"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Categoria",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Bebidas\",\n  \"descripcion\": \"Bebidas carbonatadas y jugos\",\n  \"color\": \"#FF5733\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categorias",
+              "host": ["{{baseUrl}}"],
+              "path": ["categorias"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Categoria",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Bebidas Actualizadas\",\n  \"color\": \"#00BFFF\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categorias/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categorias", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Categoria",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categorias/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categorias", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar Productos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/productos?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["productos"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Producto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Jugo de Naranja 500ml\",\n  \"sku\": \"JN-500\",\n  \"unidad\": \"unidad\",\n  \"categoria_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/productos",
+              "host": ["{{baseUrl}}"],
+              "path": ["productos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Producto",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Jugo de Naranja 1L\",\n  \"sku\": \"JN-1000\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/productos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["productos", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Producto",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/productos/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["productos", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Listar Usuarios",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Usuario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"nuevo@ejemplo.com\",\n  \"employee_code\": \"EMP-001\",\n  \"nombre\": \"Carlos García\",\n  \"rol\": \"field\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos García Actualizado\",\n  \"rol\": \"supervisor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Clientes Asignados",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/1/clientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1", "clientes"]
+            },
+            "description": "Retorna los clientes asignados a un usuario."
+          },
+          "response": []
+        },
+        {
+          "name": "Asignar Clientes a Usuario",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_ids\": [1, 2, 3]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/1/clientes",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "1", "clientes"]
+            },
+            "description": "Reemplaza completamente la lista de clientes asignados al usuario."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Visitas",
+      "item": [
+        {
+          "name": "Listar Visitas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visitas?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visitas"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Visita",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": 1,\n  \"usuario_id\": 1,\n  \"fecha\": \"2026-04-06\",\n  \"observaciones\": \"Visita de rutina\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visitas",
+              "host": ["{{baseUrl}}"],
+              "path": ["visitas"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Visita",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observaciones\": \"Visita actualizada - cliente satisfecho\",\n  \"fecha\": \"2026-04-07\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/visitas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visitas", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Visita",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visitas/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["visitas", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Inventario",
+      "item": [
+        {
+          "name": "Listar Inventario",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear Inventario (con lotes)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cliente_id\": 1,\n  \"fecha\": \"2026-04-06\",\n  \"items\": [\n    {\n      \"producto_id\": 1,\n      \"cantidad\": 50,\n      \"lotes\": [\n        {\n          \"lote\": \"L-2026-001\",\n          \"cantidad\": 30,\n          \"fecha_vencimiento\": \"2026-12-31\"\n        },\n        {\n          \"lote\": \"L-2026-002\",\n          \"cantidad\": 20,\n          \"fecha_vencimiento\": \"2027-03-15\"\n        }\n      ]\n    },\n    {\n      \"producto_id\": 2,\n      \"cantidad\": 100\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventario",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario"]
+            },
+            "description": "Crea múltiples registros de inventario para un cliente. Cada item puede incluir lotes con fecha de vencimiento. La operación es transaccional."
+          },
+          "response": []
+        },
+        {
+          "name": "Editar Inventario",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json", "type": "text" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cantidad\": 75,\n  \"fecha_actualizacion\": \"2026-04-07\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventario/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Eliminar Inventario",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventario/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventario", "1"]
+            },
+            "description": "Elimina el registro de inventario y sus lotes asociados (transaccional)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Inventario Estancado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/inventario-estancado?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["reportes", "inventario-estancado"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Consulta la vista vw_inventario_estancado. Retorna productos sin movimiento ordenados por días sin actividad."
+          },
+          "response": []
+        },
+        {
+          "name": "Productos por Vencer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/productos-por-vencer?limit=20&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["reportes", "productos-por-vencer"],
+              "query": [
+                { "key": "limit", "value": "20" },
+                { "key": "page", "value": "1" }
+              ]
+            },
+            "description": "Consulta la vista vw_productos_por_vencer. Retorna lotes próximos a vencer ordenados por fecha."
+          },
+          "response": []
+        },
+        {
+          "name": "Summary (Dashboard)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/reportes/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["reportes", "summary"]
+            },
+            "description": "Retorna conteos agregados: clientes activos, productos activos, visitas último mes, registros de inventario."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

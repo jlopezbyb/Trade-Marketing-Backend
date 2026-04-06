@@ -29,4 +29,21 @@ export class VisitaSequelizeRepository implements VisitaRepository {
     const row = await VisitaModel.create(data as any);
     return VisitaEntity.fromPrimitives(row.get({ plain: true }));
   }
+
+  async update(
+    id: number,
+    data: Partial<{ cliente_id: number; usuario_id: number; fecha: string; observaciones: string | null }>
+  ): Promise<VisitaEntity | null> {
+    const row = await VisitaModel.findByPk(id);
+    if (!row) return null;
+    await row.update(data);
+    return VisitaEntity.fromPrimitives(row.get({ plain: true }));
+  }
+
+  async delete(id: number): Promise<boolean> {
+    const row = await VisitaModel.findByPk(id);
+    if (!row) return false;
+    await row.destroy();
+    return true;
+  }
 }

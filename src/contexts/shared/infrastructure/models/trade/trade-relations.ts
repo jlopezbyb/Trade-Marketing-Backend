@@ -30,3 +30,7 @@ InventarioLoteModel.belongsTo(InventarioModel, { foreignKey: 'inventario_id' });
 // Usuario <-> Cliente (many-to-many)
 UserModel.belongsToMany(ClienteModel, { through: UsuarioClienteModel, foreignKey: 'usuario_id', as: 'clientes' });
 ClienteModel.belongsToMany(UserModel, { through: UsuarioClienteModel, foreignKey: 'cliente_id', as: 'usuarios' });
+
+// UsuarioCliente direct associations (for querying with include)
+UsuarioClienteModel.belongsTo(ClienteModel, { foreignKey: 'cliente_id' });
+UsuarioClienteModel.belongsTo(UserModel, { foreignKey: 'usuario_id' });

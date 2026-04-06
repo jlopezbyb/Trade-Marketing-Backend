@@ -58,4 +58,32 @@ export class InventarioSequelizeRepository implements InventarioRepository {
       throw error;
     }
   }
+
+  async update(
+    id: number,
+    data: Partial<{ cliente_id: number; producto_id: number; cantidad: number; fecha_actualizacion: string }>
+  ): Promise<InventarioEntity | null> {
+    const row = await InventarioModel.findByPk(id);
+    if (!row) return null;
+    await row.update(data);
+    return InventarioEntity.fromPrimitives(row.get({ plain: true }));
+  }
+
+  async delete(id: number): Promise<boolean> {
+    const t = await sequelize.transaction();
+    try {
+      const row = await InventarioModel.findByPk(id, { transaction: t });
+      if (!row) {
+        await t.rollback();
+        return false;
+      }
+      await InventarioLoteModel.destroy({ where: { inventario_id: id }, transaction: t });
+      await row.destroy({ transaction: t });
+      await t.commit();
+      return true;
+    } catch (error) {
+      await t.rollback();
+      throw error;
+    }
+  }
 }

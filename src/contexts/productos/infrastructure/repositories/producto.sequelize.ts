@@ -17,4 +17,39 @@ export class ProductoSequelizeRepository implements ProductoRepository {
       total: count
     };
   }
+
+  async create(data: {
+    nombre: string;
+    sku: string;
+    unidad: string;
+    categoria_id: number;
+    imagen_url?: string;
+  }): Promise<ProductoEntity> {
+    const row = await ProductoModel.create({ ...data, activo: true } as any);
+    return ProductoEntity.fromPrimitives(row.get({ plain: true }));
+  }
+
+  async update(
+    id: number,
+    data: Partial<{
+      nombre: string;
+      sku: string;
+      unidad: string;
+      categoria_id: number;
+      imagen_url: string | null;
+      activo: boolean;
+    }>
+  ): Promise<ProductoEntity | null> {
+    const row = await ProductoModel.findByPk(id);
+    if (!row) return null;
+    await row.update(data);
+    return ProductoEntity.fromPrimitives(row.get({ plain: true }));
+  }
+
+  async delete(id: number): Promise<boolean> {
+    const row = await ProductoModel.findByPk(id);
+    if (!row) return false;
+    await row.destroy();
+    return true;
+  }
 }

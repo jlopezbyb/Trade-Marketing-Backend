@@ -17,3 +17,13 @@ export const createInventarioSchema = z.object({
   fecha: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD'),
   items: z.array(inventarioItemSchema).min(1)
 });
+
+export const updateInventarioSchema = z.object({
+  cliente_id: z.number().int().positive().optional(),
+  producto_id: z.number().int().positive().optional(),
+  cantidad: z.number().int().nonnegative().optional(),
+  fecha_actualizacion: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato: YYYY-MM-DD')
+    .optional()
+});
