@@ -6,6 +6,10 @@ coverage
 .idea
 
 build/
+certs/*.pem
+certs/*.crt
+certs/*.key
+certs/*.pfx
 
 .scannerwork
 /logs

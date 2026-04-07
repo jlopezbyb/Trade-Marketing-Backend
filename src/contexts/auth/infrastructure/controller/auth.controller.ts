@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { LoginUseCase } from '@src/contexts/auth/application/use-cases/auth/login';
+import { AppError } from '@src/contexts/shared/infrastructure/exception/AppError';
 import { addTokenToBlacklist } from '@src/server/security/token-blacklist';
+import { createAuthCookieOptions } from '../utils/auth-cookie-options';
 
 import { createToken } from '../utils/jwt-utils';
 import { getPayload } from '../utils/jwt-utils';
@@ -10,22 +12,27 @@ import { getActiveToken, invalidateToken, setActiveToken } from '@src/server/sec
 export class AuthController {
   constructor(private readonly loginUseCase: LoginUseCase) {}
 
-  private setAuthCookies(response: Response, token: string, refresh: string) {
-    response
-      .cookie('token', token, {
-        httpOnly: false,
-        secure: true,
-        sameSite: 'none',
-        path: '/',
-        domain: '.localhost.com'
-      })
-      .cookie('refresh_token', refresh, {
-        httpOnly: false,
-        secure: true,
-        sameSite: 'none',
-        path: '/',
-        domain: '.localhost.com'
-      });
+  private buildSessionPayload(user: { id: number; email: string; rol: string; employee_code: string; nombre: string }) {
+    return {
+      id: user.id,
+      user: user.email,
+      role: user.rol,
+      type: user.rol,
+      employeeCode: user.employee_code,
+      nombre: user.nombre
+    };
+  }
+
+  private setAuthCookies(request: Request, response: Response, token: string, refresh: string) {
+    const cookieOptions = createAuthCookieOptions(request);
+
+    response.cookie('token', token, cookieOptions).cookie('refresh_token', refresh, cookieOptions);
+  }
+
+  private clearAuthCookies(request: Request, response: Response) {
+    const cookieOptions = createAuthCookieOptions(request);
+
+    return response.clearCookie('token', cookieOptions).clearCookie('refresh_token', cookieOptions);
   }
 
   async refreshToken(request: Request, response: Response, next: NextFunction) {
@@ -39,19 +46,13 @@ export class AuthController {
 
       const { user } = await this.loginUseCase.entraLogin({ email: userData.user });
 
-      const payload = {
-        user: user.email,
-        role: user.rol,
-        type: user.rol,
-        employeeCode: user.employee_code,
-        nombre: user.nombre
-      };
+      const payload = this.buildSessionPayload(user);
 
       const { token, refreshToken } = createToken(payload);
 
       setActiveToken(user.email, user.rol, token);
 
-      this.setAuthCookies(response, token, refreshToken);
+      this.setAuthCookies(request, response, token, refreshToken);
       response.status(200).json({ message: 'Success!' });
     } catch (error) {
       next(error);
@@ -68,20 +69,31 @@ export class AuthController {
       const userData = getPayload(token);
       if (userData?.user) invalidateToken(userData.user);
 
-      res.status(200).clearCookie('token').clearCookie('refresh_token').json({ message: 'Sesión finalizada correctamente' });
+      this.clearAuthCookies(req, res).status(200).json({ message: 'Sesión finalizada correctamente' });
     } catch (error) {
       next(error);
     }
   }
 
-  me(req: Request, res: Response, next: NextFunction) {
+  async me(req: Request, res: Response, next: NextFunction) {
     try {
       const payload = (req as any).user;
+      if (!payload) {
+        throw new AppError('AUTHORIZATION_NOT_PROVIDED', 401, 'Token not provided', true);
+      }
+
+      if (!payload.user) {
+        throw new AppError('INVALID_TOKEN_PAYLOAD', 403, 'Invalid token payload', true);
+      }
+
+      const { user } = await this.loginUseCase.entraLogin({ email: payload.user });
+
       res.status(200).json({
-        user: payload.user,
-        role: payload.role,
-        employeeCode: payload.employeeCode,
-        nombre: payload.nombre
+        id: user.id,
+        user: user.email,
+        role: user.rol,
+        employeeCode: user.employee_code,
+        nombre: user.nombre
       });
     } catch (error) {
       next(error);
@@ -97,13 +109,7 @@ export class AuthController {
 
       const { user } = await this.loginUseCase.entraLogin({ email });
 
-      const payload = {
-        user: user.email,
-        role: user.rol,
-        type: user.rol,
-        employeeCode: user.employee_code,
-        nombre: user.nombre
-      };
+      const payload = this.buildSessionPayload(user);
 
       const { token, refreshToken } = createToken(payload);
 
@@ -113,8 +119,8 @@ export class AuthController {
       }
       setActiveToken(user.email, user.rol, token);
 
-      this.setAuthCookies(response, token, refreshToken);
-      response.status(200).json({ message: 'Welcome!', token, refreshToken, role: user.rol });
+      this.setAuthCookies(request, response, token, refreshToken);
+      response.status(200).json({ message: 'Welcome!', role: user.rol });
     } catch (error) {
       next(error);
     }

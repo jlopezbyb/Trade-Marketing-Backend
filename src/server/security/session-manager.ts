@@ -8,6 +8,17 @@ export function getActiveToken(username: string, type: string): string | null {
   return null;
 }
 
+export function registerOrValidateActiveToken(username: string, type: string, token: string): boolean {
+  const session = activeSessionMap.get(username);
+
+  if (!session) {
+    setActiveToken(username, type, token);
+    return true;
+  }
+
+  return session.type === type && session.token === token;
+}
+
 export function setActiveToken(username: string, type: string, token: string): void {
   activeSessionMap.set(username, { type, token });
 }

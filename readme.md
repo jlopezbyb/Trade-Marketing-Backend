@@ -46,6 +46,47 @@ docker compose up -d database
 pnpm dev
 ```
 
+### Run app in local HTTPS mode (cookies)
+
+- Generate local certificates with `mkcert` or your preferred tool.
+
+```bash
+mkdir certs
+mkcert -key-file certs/localhost-key.pem -cert-file certs/localhost-cert.pem localhost 127.0.0.1 ::1
+```
+
+- Configure `.env` for HTTPS.
+
+```bash
+HTTPS_ENABLED=true
+HTTPS_KEY_PATH=certs/localhost-key.pem
+HTTPS_CERT_PATH=certs/localhost-cert.pem
+PORT=3500
+```
+
+- If you are on Windows and do not have `mkcert` or `openssl`, you can use a `.pfx` certificate generated with PowerShell instead.
+
+```bash
+HTTPS_ENABLED=true
+HTTPS_PFX_PATH=certs/localhost.pfx
+HTTPS_PFX_PASSPHRASE=changeit-local-dev
+PORT=3500
+```
+
+- Run the backend with HTTPS.
+
+```bash
+pnpm dev:https
+```
+
+- Call the backend using `https://localhost:3500` and send credentials from the frontend.
+
+```ts
+fetch('https://localhost:3500/api/v1/auth/me', {
+  credentials: 'include'
+});
+```
+
 # Structure of the project (🏗️)
 
 ## Folders

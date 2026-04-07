@@ -9,7 +9,18 @@ export class InventarioController {
       const limit = Math.min(Number(req.query.limit) || 20, 100);
       const page = Math.max(Number(req.query.page) || 1, 1);
       const result = await this.repo.getAll(limit, page);
-      res.status(200).json(result);
+      res.status(200).json({
+        data: result.data.map(item => ({
+          id: item.id,
+          cliente_id: item.cliente_id,
+          cliente_nombre: item.cliente?.nombre ?? null,
+          producto_id: item.producto_id,
+          producto_nombre: item.producto?.nombre ?? null,
+          cantidad: item.cantidad,
+          fecha_actualizacion: item.fecha_actualizacion
+        })),
+        total: result.total
+      });
     } catch (error) {
       next(error);
     }

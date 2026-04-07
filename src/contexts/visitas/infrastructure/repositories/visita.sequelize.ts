@@ -16,6 +16,7 @@ export class VisitaSequelizeRepository implements VisitaRepository {
       ],
       order: [
         ['fecha', 'DESC'],
+        ['created_at', 'DESC'],
         ['id', 'DESC']
       ]
     });

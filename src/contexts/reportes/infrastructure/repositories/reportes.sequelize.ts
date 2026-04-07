@@ -1,12 +1,39 @@
 import { sequelize } from '@src/server/config/database/sequelize';
 import { QueryTypes } from 'sequelize';
 
+export const REPORTES_DASHBOARD_DEFAULTS = {
+  inventarioEstancadoDias: 14,
+  productosPorVencerDias: 30
+} as const;
+
+type CountRow = {
+  total: string | number;
+};
+
+type SummaryRow = {
+  totalClientes: string | number;
+  totalProductos: string | number;
+  totalInventario: string | number;
+  productosPorVencer: string | number;
+  productosEstancados: string | number;
+  visitasHoy: string | number;
+  visitasSemana: string | number;
+};
+
 export class ReportesSequelizeRepository {
-  async getInventarioEstancado(limit: number, page: number) {
+  async getInventarioEstancado(
+    limit: number,
+    page: number,
+    diasSinMovimiento: number = REPORTES_DASHBOARD_DEFAULTS.inventarioEstancadoDias
+  ) {
     const offset = (page - 1) * limit;
-    const [countResult] = await sequelize.query<{ total: string }>('SELECT COUNT(*) as total FROM vw_inventario_estancado', {
-      type: QueryTypes.SELECT
-    });
+    const [countResult] = await sequelize.query<CountRow>(
+      'SELECT COUNT(*) as total FROM vw_inventario_estancado WHERE dias_sin_cambio >= :diasSinMovimiento',
+      {
+        replacements: { diasSinMovimiento },
+        type: QueryTypes.SELECT
+      }
+    );
     const data = await sequelize.query(
       `SELECT
         id,
@@ -16,41 +43,92 @@ export class ReportesSequelizeRepository {
         producto_nombre,
         cantidad,
         fecha_actualizacion,
-        (CURRENT_DATE - fecha_actualizacion) AS dias_sin_movimiento
+        dias_sin_cambio,
+        dias_sin_cambio AS dias_sin_movimiento
       FROM vw_inventario_estancado
-      ORDER BY (CURRENT_DATE - fecha_actualizacion) DESC
+      WHERE dias_sin_cambio >= :diasSinMovimiento
+      ORDER BY dias_sin_cambio DESC, id DESC
       LIMIT :limit OFFSET :offset`,
-      { replacements: { limit, offset }, type: QueryTypes.SELECT }
+      {
+        replacements: { limit, offset, diasSinMovimiento },
+        type: QueryTypes.SELECT
+      }
     );
     return { data, total: Number(countResult?.total ?? 0) };
   }
 
-  async getProductosPorVencer(limit: number, page: number) {
+  async getProductosPorVencer(
+    limit: number,
+    page: number,
+    diasParaVencer: number = REPORTES_DASHBOARD_DEFAULTS.productosPorVencerDias
+  ) {
     const offset = (page - 1) * limit;
-    const [countResult] = await sequelize.query<{ total: string }>('SELECT COUNT(*) as total FROM vw_productos_por_vencer', {
-      type: QueryTypes.SELECT
-    });
-    const data = await sequelize.query<{ total: string }>(
-      'SELECT * FROM vw_productos_por_vencer ORDER BY dias_para_vencer ASC LIMIT :limit OFFSET :offset',
-      { replacements: { limit, offset }, type: QueryTypes.SELECT }
+    const [countResult] = await sequelize.query<CountRow>(
+      `SELECT COUNT(*) as total
+      FROM vw_productos_por_vencer
+      WHERE dias_para_vencer BETWEEN 0 AND :diasParaVencer`,
+      {
+        replacements: { diasParaVencer },
+        type: QueryTypes.SELECT
+      }
+    );
+    const data = await sequelize.query(
+      `SELECT *
+      FROM vw_productos_por_vencer
+      WHERE dias_para_vencer BETWEEN 0 AND :diasParaVencer
+      ORDER BY dias_para_vencer ASC, id ASC
+      LIMIT :limit OFFSET :offset`,
+      {
+        replacements: { limit, offset, diasParaVencer },
+        type: QueryTypes.SELECT
+      }
     );
     return { data, total: Number(countResult?.total ?? 0) };
   }
 
   async getSummary() {
-    const [[clientes], [productos], [visitas], [inventario]] = await Promise.all([
-      sequelize.query('SELECT COUNT(*) as total FROM clientes WHERE activo = true', { type: QueryTypes.SELECT }) as any,
-      sequelize.query('SELECT COUNT(*) as total FROM productos WHERE activo = true', { type: QueryTypes.SELECT }) as any,
-      sequelize.query("SELECT COUNT(*) as total FROM visitas WHERE fecha >= CURRENT_DATE - INTERVAL '30 days'", {
+    const [summary] = await sequelize.query<SummaryRow>(
+      `SELECT
+        (SELECT COUNT(*) FROM clientes WHERE activo = true) AS "totalClientes",
+        (SELECT COUNT(*) FROM productos WHERE activo = true) AS "totalProductos",
+        (SELECT COALESCE(SUM(cantidad), 0) FROM inventario) AS "totalInventario",
+        (
+          SELECT COUNT(*)
+          FROM inventario_lotes
+          WHERE fecha_vencimiento BETWEEN CURRENT_DATE AND CURRENT_DATE + CAST(:productosPorVencerDias AS INTEGER)
+        ) AS "productosPorVencer",
+        (
+          SELECT COUNT(*)
+          FROM inventario
+          WHERE (CURRENT_DATE - fecha_actualizacion) >= :inventarioEstancadoDias
+        ) AS "productosEstancados",
+        (
+          SELECT COUNT(*)
+          FROM visitas
+          WHERE fecha = CURRENT_DATE
+        ) AS "visitasHoy",
+        (
+          SELECT COUNT(*)
+          FROM visitas
+          WHERE fecha >= DATE_TRUNC('week', CURRENT_DATE)::date
+        ) AS "visitasSemana"`,
+      {
+        replacements: {
+          inventarioEstancadoDias: REPORTES_DASHBOARD_DEFAULTS.inventarioEstancadoDias,
+          productosPorVencerDias: REPORTES_DASHBOARD_DEFAULTS.productosPorVencerDias
+        },
         type: QueryTypes.SELECT
-      }) as any,
-      sequelize.query('SELECT COUNT(*) as total FROM inventario', { type: QueryTypes.SELECT }) as any
-    ]);
+      }
+    );
+
     return {
-      clientes_activos: Number(clientes?.total ?? 0),
-      productos_activos: Number(productos?.total ?? 0),
-      visitas_ultimo_mes: Number(visitas?.total ?? 0),
-      registros_inventario: Number(inventario?.total ?? 0)
+      totalClientes: Number(summary?.totalClientes ?? 0),
+      totalProductos: Number(summary?.totalProductos ?? 0),
+      totalInventario: Number(summary?.totalInventario ?? 0),
+      productosPorVencer: Number(summary?.productosPorVencer ?? 0),
+      productosEstancados: Number(summary?.productosEstancados ?? 0),
+      visitasHoy: Number(summary?.visitasHoy ?? 0),
+      visitasSemana: Number(summary?.visitasSemana ?? 0)
     };
   }
 }

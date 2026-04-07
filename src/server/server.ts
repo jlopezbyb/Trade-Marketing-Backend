@@ -1,4 +1,5 @@
 import http from 'node:http';
+import https from 'node:https';
 import { AddressInfo } from 'node:net';
 
 import express from 'express';
@@ -12,7 +13,7 @@ import { config } from '@src/server/config/env/envs';
 import WinstonLogger from '@contexts/shared/infrastructure/WinstonLogger';
 import { sequelizeConnection } from '@src/server/config/database/sequelize';
 import { sequelize } from '@src/server/config/database/sequelize';
-import '@contexts/shared/infrastructure/models/relations';
+import { loadHttpsOptions } from '@src/server/utils/load-https-options';
 
 import { handleErrors } from '@src/server/middleware/handle-errors';
 import routes from '@src/contexts/shared/infrastructure/routes/index';
@@ -21,7 +22,7 @@ import path from 'node:path';
 
 export class Server {
   private readonly app: express.Application;
-  private server?: http.Server;
+  private server?: http.Server | https.Server;
   private logger: WinstonLogger;
 
   constructor() {
@@ -33,22 +34,12 @@ export class Server {
 
   private loadMiddlewares() {
     // 🌐 CORS configuración
-    const allowedOrigins = [
-      'https://devparqueosrrhh.claro.com.gt',
-      'https://d123456abcdef.cloudfront.net',
-      'http://localhost:4200',
-      'https://dy3ohu4eojzw6.cloudfront.net',
-      'https://parqueosrrhh.claro.com.gt',
-      'https://admin.parqueosrrhh.claro.com.gt',
-      'https://claro-com-gt.access.mcas.ms',
-      'https://login.microsoftonline.com',
-      'https://localhost:3000'
-    ];
+    const allowedOrigins = new Set(config.APP.CORS_ALLOWED_ORIGINS);
 
     const corsOptions: cors.CorsOptions = {
       origin: (origin, callback) => {
         //console.log(`🌐 CORS Origin: ${origin}`);
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.has(origin)) {
           //console.log(`✅ CORS permitido: ${origin}`);
           callback(null, true);
         } else {
@@ -135,9 +126,22 @@ export class Server {
     return new Promise((resolve, reject) => {
       sequelizeConnection()
         .then(message => {
-          this.server = this.app.listen(config.APP.PORT, () => {
+          const httpsOptions = loadHttpsOptions({
+            enabled: config.APP.HTTPS_ENABLED,
+            keyPath: config.APP.HTTPS_KEY_PATH,
+            certPath: config.APP.HTTPS_CERT_PATH,
+            caPath: config.APP.HTTPS_CA_PATH,
+            pfxPath: config.APP.HTTPS_PFX_PATH,
+            pfxPassphrase: config.APP.HTTPS_PFX_PASSPHRASE
+          });
+          const protocol = httpsOptions ? 'https' : 'http';
+
+          this.server = httpsOptions ? https.createServer(httpsOptions, this.app) : http.createServer(this.app);
+
+          this.server.listen(config.APP.PORT, () => {
             const { port, address } = this.server?.address() as AddressInfo;
-            this.logger.info(`🚀 Server running on port ${address}:${port}`);
+            const host = address === '::' ? 'localhost' : address;
+            this.logger.info(`🚀 Server running on ${protocol}://${host}:${port}`);
             this.logger.info(message as string);
             resolve();
           });

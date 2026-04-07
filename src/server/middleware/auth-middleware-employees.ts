@@ -2,13 +2,14 @@ import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../../contexts/shared/infrastructure/exception/AppError';
 import { getPayload, validateToken } from '@src/contexts/auth/infrastructure/utils/jwt-utils';
 import { isTokenBlacklisted } from '../security/token-blacklist';
-import { getActiveToken } from '../security/session-manager';
+import { registerOrValidateActiveToken } from '../security/session-manager';
+import { resolveAuthToken } from './utils/resolve-auth-token';
 
 export const validateAuth =
   (cookie: string = 'token') =>
   (request: Request, response: Response, next: NextFunction) => {
     try {
-      const token = request.cookies[cookie] as string;
+      const token = resolveAuthToken(request, cookie);
 
       if (!token) {
         throw new AppError('AUTHORIZATION_NOT_PROVIDED', 401, 'Token not provided', true);
@@ -31,8 +32,7 @@ export const validateAuth =
       }
       request.user = payload;
 
-      const activeToken = getActiveToken(payload.user, String(payload.type));
-      if (activeToken !== token) {
+      if (!registerOrValidateActiveToken(payload.user, String(payload.type), token)) {
         throw new AppError('SESSION_INVALIDATED', 401, 'Esta sesión ha sido reemplazada por otro inicio de sesión.', true);
       }
 

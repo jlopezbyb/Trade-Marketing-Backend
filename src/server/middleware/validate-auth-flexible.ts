@@ -2,11 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import { AppError } from '@src/contexts/shared/infrastructure/exception/AppError';
 import { getPayload, validateToken } from '@src/contexts/auth/infrastructure/utils/jwt-utils';
 import { isTokenBlacklisted } from '../security/token-blacklist';
-import { getActiveToken } from '../security/session-manager';
+import { registerOrValidateActiveToken } from '../security/session-manager';
+import { resolveAuthToken } from './utils/resolve-auth-token';
 
 export const validateAuthFlexible = () => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const token = req.cookies['token_employee'] || req.cookies['token'];
+    const token = resolveAuthToken(req, 'token_employee') ?? resolveAuthToken(req, 'token');
 
     if (!token) {
       return next(new AppError('AUTHORIZATION_NOT_PROVIDED', 401, 'Token no proporcionado', true));
@@ -25,8 +26,7 @@ export const validateAuthFlexible = () => {
       return next(new AppError('INVALID_TOKEN_PAYLOAD', 403, 'Payload inválido', true));
     }
 
-    const activeToken = getActiveToken(payload.user, payload.type);
-    if (activeToken !== token) {
+    if (!registerOrValidateActiveToken(payload.user, payload.type, token)) {
       return next(new AppError('SESSION_INVALIDATED', 401, 'Esta sesión ha sido reemplazada.', true));
     }
 

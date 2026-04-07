@@ -3,10 +3,13 @@ import jwksRsa from 'jwks-rsa';
 import { config } from '@src/server/config/env/envs';
 
 interface JwtPayload {
+  id?: number;
   user: string;
   role: string;
-  type: 'admin';
-  resources: string[];
+  type: string;
+  employeeCode?: string;
+  nombre?: string;
+  resources?: string[];
   iat: number;
   exp: number;
   aud: string;
