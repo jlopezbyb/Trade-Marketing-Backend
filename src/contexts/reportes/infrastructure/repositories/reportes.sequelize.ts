@@ -4,11 +4,22 @@ import { QueryTypes } from 'sequelize';
 export class ReportesSequelizeRepository {
   async getInventarioEstancado(limit: number, page: number) {
     const offset = (page - 1) * limit;
-    const [countResult] = await sequelize.query('SELECT COUNT(*) as total FROM vw_inventario_estancado', {
+    const [countResult] = await sequelize.query<{ total: string }>('SELECT COUNT(*) as total FROM vw_inventario_estancado', {
       type: QueryTypes.SELECT
     });
     const data = await sequelize.query(
-      'SELECT * FROM vw_inventario_estancado ORDER BY dias_sin_movimiento DESC LIMIT :limit OFFSET :offset',
+      `SELECT
+        id,
+        cliente_id,
+        cliente_nombre,
+        producto_id,
+        producto_nombre,
+        cantidad,
+        fecha_actualizacion,
+        (CURRENT_DATE - fecha_actualizacion) AS dias_sin_movimiento
+      FROM vw_inventario_estancado
+      ORDER BY (CURRENT_DATE - fecha_actualizacion) DESC
+      LIMIT :limit OFFSET :offset`,
       { replacements: { limit, offset }, type: QueryTypes.SELECT }
     );
     return { data, total: Number(countResult?.total ?? 0) };
@@ -16,10 +27,10 @@ export class ReportesSequelizeRepository {
 
   async getProductosPorVencer(limit: number, page: number) {
     const offset = (page - 1) * limit;
-    const [countResult] = await sequelize.query('SELECT COUNT(*) as total FROM vw_productos_por_vencer', {
+    const [countResult] = await sequelize.query<{ total: string }>('SELECT COUNT(*) as total FROM vw_productos_por_vencer', {
       type: QueryTypes.SELECT
     });
-    const data = await sequelize.query(
+    const data = await sequelize.query<{ total: string }>(
       'SELECT * FROM vw_productos_por_vencer ORDER BY dias_para_vencer ASC LIMIT :limit OFFSET :offset',
       { replacements: { limit, offset }, type: QueryTypes.SELECT }
     );

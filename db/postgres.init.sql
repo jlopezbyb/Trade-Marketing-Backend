@@ -200,7 +200,7 @@ SELECT
 	p.nombre AS producto_nombre,
 	i.cantidad,
 	i.fecha_actualizacion,
-	(CURRENT_DATE - i.fecha_actualizacion) AS dias_sin_cambio
+	(CURRENT_DATE - i.fecha_actualizacion) AS dias_sin_movimiento
 FROM inventario i
 JOIN clientes c ON c.id = i.cliente_id
 JOIN productos p ON p.id = i.producto_id;

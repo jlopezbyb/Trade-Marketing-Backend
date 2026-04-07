@@ -7,7 +7,7 @@ export const createClienteSchema = z.object({
   telefono: z.string().min(1).max(20),
   contacto: z.string().min(1).max(120),
   email: z.string().email().optional(),
-  imagen_url: z.string().url().optional()
+  imagen_url: z.string().optional()
 });
 
 export const updateClienteSchema = z.object({
@@ -17,6 +17,6 @@ export const updateClienteSchema = z.object({
   telefono: z.string().min(1).max(20).optional(),
   contacto: z.string().min(1).max(120).optional(),
   email: z.string().email().nullable().optional(),
-  imagen_url: z.string().url().nullable().optional(),
+  imagen_url: z.string().nullable().optional(),
   activo: z.boolean().optional()
 });

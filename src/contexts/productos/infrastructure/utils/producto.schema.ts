@@ -5,7 +5,7 @@ export const createProductoSchema = z.object({
   sku: z.string().min(1).max(30),
   unidad: z.string().min(1).max(20),
   categoria_id: z.number().int().positive(),
-  imagen_url: z.string().url().optional()
+  imagen_url: z.string().min(1).optional()
 });
 
 export const updateProductoSchema = z.object({

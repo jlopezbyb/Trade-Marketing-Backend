@@ -123,6 +123,7 @@ export class Server {
     // 📂 Archivos públicos
     this.app.use(express.static(path.resolve(process.cwd(), 'public')));
     this.app.use('/scripts', express.static(path.join(__dirname, 'public', 'scripts')));
+    this.app.use('/uploads', express.static(path.join(__dirname, '../../public/uploads/')));
   }
 
   private loadRoutes() {

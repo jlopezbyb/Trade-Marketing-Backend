@@ -35,6 +35,9 @@ export class ClienteController {
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
+      if (req.file) {
+        req.body.imagen_url = `/uploads/clientes/${req.file.filename}`;
+      }
       const cliente = await this.repo.create(req.body);
       res.status(201).json(cliente.toPrimitives());
     } catch (error) {
@@ -44,6 +47,9 @@ export class ClienteController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
+      if (req.file) {
+        req.body.imagen_url = `/uploads/clientes/${req.file.filename}`;
+      }
       const cliente = await this.repo.update(Number(req.params.id), req.body);
       if (!cliente) return res.status(404).json({ message: 'Cliente no encontrado' });
       res.status(200).json(cliente.toPrimitives());
