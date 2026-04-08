@@ -2,17 +2,29 @@ import { Router } from 'express';
 import { usersController } from '../dependencies';
 import { validateBody } from '@src/server/middleware/validate-body';
 import { createUserSchema, updateUserSchema, asignarClientesSchema } from '../utils/users.schema';
+import { checkAccessByRole } from '@src/server/middleware/check-access-by-role';
 
 const routes = Router();
 
-routes.get('/', usersController.getAll.bind(usersController));
-routes.get('/:id', usersController.getById.bind(usersController));
-routes.post('/', validateBody(createUserSchema), usersController.create.bind(usersController));
-routes.put('/:id', validateBody(updateUserSchema), usersController.update.bind(usersController));
-routes.delete('/:id', usersController.delete.bind(usersController));
+// Solo supervisor puede administrar usuarios
+routes.get('/', checkAccessByRole(['supervisor']), usersController.getAll.bind(usersController));
+routes.get('/:id', checkAccessByRole(['supervisor']), usersController.getById.bind(usersController));
+routes.post('/', validateBody(createUserSchema), checkAccessByRole(['supervisor']), usersController.create.bind(usersController));
+routes.put(
+  '/:id',
+  validateBody(updateUserSchema),
+  checkAccessByRole(['supervisor']),
+  usersController.update.bind(usersController)
+);
+routes.delete('/:id', checkAccessByRole(['supervisor']), usersController.delete.bind(usersController));
 
 // Asignación de clientes
-routes.get('/:id/clientes', usersController.getClientesAsignados.bind(usersController));
-routes.put('/:id/clientes', validateBody(asignarClientesSchema), usersController.asignarClientes.bind(usersController));
+routes.get('/:id/clientes', checkAccessByRole(['supervisor']), usersController.getClientesAsignados.bind(usersController));
+routes.put(
+  '/:id/clientes',
+  validateBody(asignarClientesSchema),
+  checkAccessByRole(['supervisor']),
+  usersController.asignarClientes.bind(usersController)
+);
 
 export default routes;
