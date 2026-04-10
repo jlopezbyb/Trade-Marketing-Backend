@@ -73,6 +73,17 @@ export const config = {
     EXP: process.env.JWT_EXPIRATION ?? '2h',
     EXP_REFRESH: process.env.JWT_REFRESH_EXP ?? '1d'
   },
+  NAV_PRODUCTS: {
+    URL: process.env.NAV_PRODUCTS_URL,
+    USERNAME: process.env.NAV_PRODUCTS_USERNAME,
+    PASSWORD: process.env.NAV_PRODUCTS_PASSWORD,
+    DEFAULT_CATEGORY_ID: (() => {
+      const raw = process.env.NAV_PRODUCTS_DEFAULT_CATEGORY_ID;
+      if (!raw) return undefined;
+      const parsed = parseInt(raw, 10);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    })()
+  },
   ENTRA_ID: {
     CLIENT_ID: process.env.ENTRA_CLIENT_ID,
     TENANT_ID: process.env.ENTRA_TENANT_ID

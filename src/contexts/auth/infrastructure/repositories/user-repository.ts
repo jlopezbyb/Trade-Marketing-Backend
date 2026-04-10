@@ -9,7 +9,7 @@ export class MySQLSequelizeUserRepository implements UserRepository {
   }
 
   async update(user: {
-    id: number;
+    id: string;
     email: string;
     employee_code: string;
     nombre: string;
@@ -28,13 +28,13 @@ export class MySQLSequelizeUserRepository implements UserRepository {
     );
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     const user = await UserModel.findByPk(id);
     if (!user) throw new Error('User not found');
     await user.destroy();
   }
 
-  async getById(id: number): Promise<UserEntity | null> {
+  async getById(id: string): Promise<UserEntity | null> {
     const userDatabase = await UserModel.findByPk(id);
     if (!userDatabase) return null;
     return UserEntity.fromPrimitives(userDatabase.get({ plain: true }));

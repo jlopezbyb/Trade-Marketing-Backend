@@ -1,13 +1,13 @@
 export class ProductoEntity {
   constructor(
-    readonly id: number,
+    readonly id: string,
     readonly nombre: string,
     readonly sku: string,
     readonly unidad: string,
-    readonly categoria_id: number,
+    readonly categoria_id: string,
     readonly imagen_url: string | null,
     readonly activo: boolean,
-    readonly categoria?: { id: number; nombre: string; color: string | null }
+    readonly categoria?: { id: string; nombre: string; color: string | null }
   ) {}
 
   static fromPrimitives(data: any): ProductoEntity {

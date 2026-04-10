@@ -1,13 +1,13 @@
 export class VisitaEntity {
   constructor(
-    readonly id: number,
-    readonly cliente_id: number,
-    readonly usuario_id: number,
+    readonly id: string,
+    readonly cliente_id: string,
+    readonly usuario_id: string,
     readonly fecha: string,
     readonly observaciones: string | null,
     readonly created_at?: Date,
-    readonly cliente?: { id: number; nombre: string },
-    readonly usuario?: { id: number; nombre: string }
+    readonly cliente?: { id: string; nombre: string },
+    readonly usuario?: { id: string; nombre: string }
   ) {}
 
   static fromPrimitives(data: any): VisitaEntity {

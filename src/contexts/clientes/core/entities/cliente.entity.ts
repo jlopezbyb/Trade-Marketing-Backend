@@ -1,6 +1,6 @@
 export class ClienteEntity {
   constructor(
-    readonly id: number,
+    readonly id: string,
     readonly nombre: string,
     readonly cliente_code: string,
     readonly direccion: string,

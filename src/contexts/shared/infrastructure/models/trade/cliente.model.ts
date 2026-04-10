@@ -5,7 +5,7 @@ export class ClienteModel extends Model {}
 
 ClienteModel.init(
   {
-    id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
+    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
     nombre: { type: DataTypes.STRING(180), allowNull: false },
     cliente_code: { type: DataTypes.STRING(80), unique: true, allowNull: false },
     direccion: { type: DataTypes.STRING(255), allowNull: false },

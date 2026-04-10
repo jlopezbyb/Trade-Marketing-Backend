@@ -7,9 +7,9 @@ export class UserModel extends Model {}
 UserModel.init(
   {
     id: {
-      type: DataTypes.BIGINT,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true
+      defaultValue: DataTypes.UUIDV4
     },
     email: {
       type: DataTypes.STRING(255),

@@ -24,6 +24,12 @@ services:
     restart: always
     env_file:
       - .env
+    environment:
+      # Dentro de la red de Docker, el host de la BD es el nombre del servicio
+      DB_HOST: database-trade-marketing
+      DB_PORT: 5432
+      # En el contenedor usamos HTTP plano; el HTTPS lo maneja el reverse proxy externo
+      HTTPS_ENABLED: "false"
     healthcheck:
       test: curl --fail http://localhost:3500/api/v1/health || exit 1
       interval: 1m30s

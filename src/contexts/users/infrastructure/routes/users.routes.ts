@@ -19,7 +19,13 @@ routes.put(
 routes.delete('/:id', checkAccessByRole(['supervisor']), usersController.delete.bind(usersController));
 
 // Asignación de clientes
-routes.get('/:id/clientes', checkAccessByRole(['supervisor']), usersController.getClientesAsignados.bind(usersController));
+// - supervisor puede ver los clientes de cualquier usuario
+// - field solo puede ver sus propios clientes (se fuerza en el controlador)
+routes.get(
+  '/:id/clientes',
+  checkAccessByRole(['supervisor', 'field']),
+  usersController.getClientesAsignados.bind(usersController)
+);
 routes.put(
   '/:id/clientes',
   validateBody(asignarClientesSchema),

@@ -27,32 +27,46 @@ export class InventarioSequelizeRepository implements InventarioRepository {
     };
   }
 
-  async createBulk(cliente_id: number, fecha: string, items: InventarioItem[]): Promise<InventarioEntity[]> {
+  async createBulk(cliente_id: string, fecha: string, items: InventarioItem[]): Promise<InventarioEntity[]> {
     const t = await sequelize.transaction();
     try {
-      const created: InventarioEntity[] = [];
+      const result: InventarioEntity[] = [];
       for (const item of items) {
-        const inv = await InventarioModel.create(
-          { cliente_id, producto_id: item.producto_id, cantidad: item.cantidad, fecha_actualizacion: fecha } as any,
-          { transaction: t }
-        );
-        const plain = inv.get({ plain: true });
+        let inv = await InventarioModel.findOne({
+          where: { cliente_id, producto_id: item.producto_id },
+          transaction: t
+        });
 
-        if (item.lotes?.length) {
-          await InventarioLoteModel.bulkCreate(
-            item.lotes.map(l => ({
-              inventario_id: plain.id,
-              lote: l.lote,
-              cantidad: l.cantidad,
-              fecha_vencimiento: l.fecha_vencimiento
-            })),
+        if (inv) {
+          await inv.update({ cantidad: item.cantidad, fecha_actualizacion: fecha } as any, { transaction: t });
+        } else {
+          inv = await InventarioModel.create(
+            { cliente_id, producto_id: item.producto_id, cantidad: item.cantidad, fecha_actualizacion: fecha } as any,
             { transaction: t }
           );
         }
-        created.push(InventarioEntity.fromPrimitives(plain));
+
+        if (item.lotes !== undefined) {
+          await InventarioLoteModel.destroy({ where: { inventario_id: (inv as any).id }, transaction: t });
+
+          if (item.lotes.length) {
+            await InventarioLoteModel.bulkCreate(
+              item.lotes.map(l => ({
+                inventario_id: (inv as any).id,
+                lote: l.lote,
+                cantidad: l.cantidad,
+                fecha_vencimiento: l.fecha_vencimiento
+              })),
+              { transaction: t }
+            );
+          }
+        }
+
+        const plain = inv.get({ plain: true });
+        result.push(InventarioEntity.fromPrimitives(plain));
       }
       await t.commit();
-      return created;
+      return result;
     } catch (error) {
       await t.rollback();
       throw error;
@@ -60,8 +74,8 @@ export class InventarioSequelizeRepository implements InventarioRepository {
   }
 
   async update(
-    id: number,
-    data: Partial<{ cliente_id: number; producto_id: number; cantidad: number; fecha_actualizacion: string }>
+    id: string,
+    data: Partial<{ cliente_id: string; producto_id: string; cantidad: number; fecha_actualizacion: string }>
   ): Promise<InventarioEntity | null> {
     const row = await InventarioModel.findByPk(id);
     if (!row) return null;
@@ -69,7 +83,7 @@ export class InventarioSequelizeRepository implements InventarioRepository {
     return InventarioEntity.fromPrimitives(row.get({ plain: true }));
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const t = await sequelize.transaction();
     try {
       const row = await InventarioModel.findByPk(id, { transaction: t });

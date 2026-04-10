@@ -26,14 +26,14 @@ export class VisitaSequelizeRepository implements VisitaRepository {
     };
   }
 
-  async create(data: { cliente_id: number; usuario_id: number; fecha: string; observaciones?: string }): Promise<VisitaEntity> {
+  async create(data: { cliente_id: string; usuario_id: string; fecha: string; observaciones?: string }): Promise<VisitaEntity> {
     const row = await VisitaModel.create(data as any);
     return VisitaEntity.fromPrimitives(row.get({ plain: true }));
   }
 
   async update(
-    id: number,
-    data: Partial<{ cliente_id: number; usuario_id: number; fecha: string; observaciones: string | null }>
+    id: string,
+    data: Partial<{ cliente_id: string; usuario_id: string; fecha: string; observaciones: string | null }>
   ): Promise<VisitaEntity | null> {
     const row = await VisitaModel.findByPk(id);
     if (!row) return null;
@@ -41,7 +41,7 @@ export class VisitaSequelizeRepository implements VisitaRepository {
     return VisitaEntity.fromPrimitives(row.get({ plain: true }));
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const row = await VisitaModel.findByPk(id);
     if (!row) return false;
     await row.destroy();

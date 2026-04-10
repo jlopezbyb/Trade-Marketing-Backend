@@ -32,7 +32,7 @@ export class ProductoController {
       if (req.file) {
         req.body.imagen_url = `/uploads/productos/${req.file.filename}`;
       }
-      const producto = await this.repo.update(Number(req.params.id), req.body);
+      const producto = await this.repo.update(String(req.params.id), req.body);
       if (!producto) return res.status(404).json({ message: 'Producto no encontrado' });
       res.status(200).json(producto.toPrimitives());
     } catch (error) {
@@ -42,7 +42,7 @@ export class ProductoController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const deleted = await this.repo.delete(Number(req.params.id));
+      const deleted = await this.repo.delete(String(req.params.id));
       if (!deleted) return res.status(404).json({ message: 'Producto no encontrado' });
       res.status(200).json({ message: 'Producto eliminado' });
     } catch (error) {

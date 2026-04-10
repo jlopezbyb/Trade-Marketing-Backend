@@ -2,7 +2,7 @@ import { ClienteEntity } from '../entities/cliente.entity';
 
 export interface ClienteRepository {
   getAll(limit: number, page: number): Promise<{ data: ClienteEntity[]; total: number }>;
-  getById(id: number): Promise<ClienteEntity | null>;
+  getById(id: string): Promise<ClienteEntity | null>;
   create(data: {
     nombre: string;
     cliente_code: string;
@@ -13,7 +13,7 @@ export interface ClienteRepository {
     imagen_url?: string;
   }): Promise<ClienteEntity>;
   update(
-    id: number,
+    id: string,
     data: Partial<{
       nombre: string;
       cliente_code: string;
@@ -25,6 +25,6 @@ export interface ClienteRepository {
       activo: boolean;
     }>
   ): Promise<ClienteEntity | null>;
-  delete(id: number): Promise<boolean>;
-  getByUsuarioId(usuarioId: number, limit: number, page: number): Promise<{ data: ClienteEntity[]; total: number }>;
+  delete(id: string): Promise<boolean>;
+  getByUsuarioId(usuarioId: string, limit: number, page: number): Promise<{ data: ClienteEntity[]; total: number }>;
 }

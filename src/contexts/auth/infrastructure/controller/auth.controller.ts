@@ -12,7 +12,7 @@ import { getActiveToken, invalidateToken, setActiveToken } from '@src/server/sec
 export class AuthController {
   constructor(private readonly loginUseCase: LoginUseCase) {}
 
-  private buildSessionPayload(user: { id: number; email: string; rol: string; employee_code: string; nombre: string }) {
+  private buildSessionPayload(user: { id: string; email: string; rol: string; employee_code: string; nombre: string }) {
     return {
       id: user.id,
       user: user.email,

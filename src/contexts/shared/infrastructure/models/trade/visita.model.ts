@@ -5,9 +5,9 @@ export class VisitaModel extends Model {}
 
 VisitaModel.init(
   {
-    id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
-    cliente_id: { type: DataTypes.BIGINT, allowNull: false, references: { model: 'clientes', key: 'id' } },
-    usuario_id: { type: DataTypes.BIGINT, allowNull: false, references: { model: 'usuarios', key: 'id' } },
+    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
+    cliente_id: { type: DataTypes.UUID, allowNull: false, references: { model: 'clientes', key: 'id' } },
+    usuario_id: { type: DataTypes.UUID, allowNull: false, references: { model: 'usuarios', key: 'id' } },
     fecha: { type: DataTypes.DATEONLY, allowNull: false },
     observaciones: { type: DataTypes.TEXT, allowNull: false }
   },

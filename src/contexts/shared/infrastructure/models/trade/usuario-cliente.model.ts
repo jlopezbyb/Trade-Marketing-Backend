@@ -5,8 +5,8 @@ export class UsuarioClienteModel extends Model {}
 
 UsuarioClienteModel.init(
   {
-    usuario_id: { type: DataTypes.BIGINT, primaryKey: true, references: { model: 'usuarios', key: 'id' } },
-    cliente_id: { type: DataTypes.BIGINT, primaryKey: true, references: { model: 'clientes', key: 'id' } }
+    usuario_id: { type: DataTypes.UUID, primaryKey: true, references: { model: 'usuarios', key: 'id' } },
+    cliente_id: { type: DataTypes.UUID, primaryKey: true, references: { model: 'clientes', key: 'id' } }
   },
   {
     sequelize,

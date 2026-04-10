@@ -1,12 +1,12 @@
 export class InventarioEntity {
   constructor(
-    readonly id: number,
-    readonly cliente_id: number,
-    readonly producto_id: number,
+    readonly id: string,
+    readonly cliente_id: string,
+    readonly producto_id: string,
     readonly cantidad: number,
     readonly fecha_actualizacion: string,
-    readonly cliente?: { id: number; nombre: string },
-    readonly producto?: { id: number; nombre: string; sku: string }
+    readonly cliente?: { id: string; nombre: string },
+    readonly producto?: { id: string; nombre: string; sku: string }
   ) {}
 
   static fromPrimitives(data: any): InventarioEntity {

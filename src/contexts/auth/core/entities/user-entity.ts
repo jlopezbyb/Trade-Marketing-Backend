@@ -1,7 +1,7 @@
 export type UserRol = 'field' | 'supervisor';
 
 export class UserEntity {
-  readonly id: number;
+  readonly id: string;
   readonly email: string;
   readonly employee_code: string;
   readonly nombre: string;
@@ -10,7 +10,7 @@ export class UserEntity {
   readonly imagen_url?: string | null;
 
   constructor(
-    id: number,
+    id: string,
     email: string,
     employee_code: string,
     nombre: string,
@@ -28,7 +28,7 @@ export class UserEntity {
   }
 
   static fromPrimitives(plainData: {
-    id: number;
+    id: string;
     email: string;
     employee_code: string;
     nombre: string;

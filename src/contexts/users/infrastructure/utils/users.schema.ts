@@ -18,5 +18,5 @@ export const updateUserSchema = z.object({
 });
 
 export const asignarClientesSchema = z.object({
-  cliente_ids: z.array(z.number().int().positive()).min(0)
+  cliente_ids: z.array(z.string().uuid()).min(0)
 });

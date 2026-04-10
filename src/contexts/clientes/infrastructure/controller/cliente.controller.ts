@@ -10,7 +10,7 @@ export class ClienteController {
       const page = Math.max(Number(req.query.page) || 1, 1);
 
       // Si viene usuario_id, retorna solo clientes asignados a ese usuario
-      const usuarioId = req.query.usuario_id ? Number(req.query.usuario_id) : null;
+      const usuarioId = req.query.usuario_id ? String(req.query.usuario_id) : null;
       if (usuarioId) {
         const result = await this.repo.getByUsuarioId(usuarioId, limit, page);
         return res.status(200).json(result);
@@ -25,7 +25,7 @@ export class ClienteController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const cliente = await this.repo.getById(Number(req.params.id));
+      const cliente = await this.repo.getById(String(req.params.id));
       if (!cliente) return res.status(404).json({ message: 'Cliente no encontrado' });
       res.status(200).json(cliente.toPrimitives());
     } catch (error) {
@@ -50,7 +50,7 @@ export class ClienteController {
       if (req.file) {
         req.body.imagen_url = `/uploads/clientes/${req.file.filename}`;
       }
-      const cliente = await this.repo.update(Number(req.params.id), req.body);
+      const cliente = await this.repo.update(String(req.params.id), req.body);
       if (!cliente) return res.status(404).json({ message: 'Cliente no encontrado' });
       res.status(200).json(cliente.toPrimitives());
     } catch (error) {
@@ -60,7 +60,7 @@ export class ClienteController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      const deleted = await this.repo.delete(Number(req.params.id));
+      const deleted = await this.repo.delete(String(req.params.id));
       if (!deleted) return res.status(404).json({ message: 'Cliente no encontrado' });
       res.status(200).json({ message: 'Cliente eliminado' });
     } catch (error) {

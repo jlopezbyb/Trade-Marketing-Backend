@@ -6,19 +6,19 @@ export interface ProductoRepository {
     nombre: string;
     sku: string;
     unidad: string;
-    categoria_id: number;
+    categoria_id: string;
     imagen_url?: string;
   }): Promise<ProductoEntity>;
   update(
-    id: number,
+    id: string,
     data: Partial<{
       nombre: string;
       sku: string;
       unidad: string;
-      categoria_id: number;
+      categoria_id: string;
       imagen_url: string | null;
       activo: boolean;
     }>
   ): Promise<ProductoEntity | null>;
-  delete(id: number): Promise<boolean>;
+  delete(id: string): Promise<boolean>;
 }

@@ -5,7 +5,7 @@ export class CategoriaModel extends Model {}
 
 CategoriaModel.init(
   {
-    id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
+    id: { type: DataTypes.UUID, primaryKey: true, defaultValue: DataTypes.UUIDV4 },
     nombre: { type: DataTypes.STRING(120), unique: true, allowNull: false },
     descripcion: { type: DataTypes.TEXT },
     color: { type: DataTypes.STRING(20), allowNull: false },

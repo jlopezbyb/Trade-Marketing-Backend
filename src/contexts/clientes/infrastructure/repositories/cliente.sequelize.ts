@@ -7,6 +7,7 @@ export class ClienteSequelizeRepository implements ClienteRepository {
   async getAll(limit: number, page: number): Promise<{ data: ClienteEntity[]; total: number }> {
     const offset = (page - 1) * limit;
     const { count, rows } = await ClienteModel.findAndCountAll({
+      where: { activo: true },
       offset,
       limit,
       order: [['nombre', 'ASC']]
@@ -17,8 +18,8 @@ export class ClienteSequelizeRepository implements ClienteRepository {
     };
   }
 
-  async getById(id: number): Promise<ClienteEntity | null> {
-    const row = await ClienteModel.findByPk(id);
+  async getById(id: string): Promise<ClienteEntity | null> {
+    const row = await ClienteModel.findOne({ where: { id, activo: true } });
     if (!row) return null;
     return ClienteEntity.fromPrimitives(row.get({ plain: true }));
   }
@@ -37,7 +38,7 @@ export class ClienteSequelizeRepository implements ClienteRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: Partial<{
       nombre: string;
       cliente_code: string;
@@ -55,20 +56,20 @@ export class ClienteSequelizeRepository implements ClienteRepository {
     return ClienteEntity.fromPrimitives(row.get({ plain: true }));
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const row = await ClienteModel.findByPk(id);
     if (!row) return false;
-    await row.destroy();
+    await row.update({ activo: false });
     return true;
   }
 
-  async getByUsuarioId(usuarioId: number, limit: number, page: number): Promise<{ data: ClienteEntity[]; total: number }> {
+  async getByUsuarioId(usuarioId: string, limit: number, page: number): Promise<{ data: ClienteEntity[]; total: number }> {
     const offset = (page - 1) * limit;
     const asignados = await UsuarioClienteModel.findAll({ where: { usuario_id: usuarioId }, attributes: ['cliente_id'] });
-    const ids = asignados.map(r => (r.get({ plain: true }) as { cliente_id: number }).cliente_id);
+    const ids = asignados.map(r => (r.get({ plain: true }) as { cliente_id: string }).cliente_id);
     if (ids.length === 0) return { data: [], total: 0 };
     const { count, rows } = await ClienteModel.findAndCountAll({
-      where: { id: ids },
+      where: { id: ids, activo: true },
       offset,
       limit,
       order: [['nombre', 'ASC']]

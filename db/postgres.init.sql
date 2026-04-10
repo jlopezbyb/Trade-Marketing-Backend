@@ -1,7 +1,4 @@
--- =========================================================
--- INIT SQL - Trade Marketing (PostgreSQL, idempotente)
--- Este script se ejecuta sobre la base definida en POSTGRES_DB.
--- =========================================================
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
@@ -16,7 +13,7 @@ $$ LANGUAGE plpgsql;
 -- =========================================================
 
 CREATE TABLE IF NOT EXISTS usuarios (
-	id BIGSERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	email VARCHAR(255) NOT NULL UNIQUE,
 	employee_code VARCHAR(50) NOT NULL UNIQUE,
 	nombre VARCHAR(150) NOT NULL,
@@ -28,7 +25,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 );
 
 CREATE TABLE IF NOT EXISTS clientes (
-	id BIGSERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	nombre VARCHAR(180) NOT NULL,
 	cliente_code VARCHAR(80) NOT NULL UNIQUE,
 	direccion VARCHAR(255) NOT NULL,
@@ -42,14 +39,14 @@ CREATE TABLE IF NOT EXISTS clientes (
 );
 
 CREATE TABLE IF NOT EXISTS usuario_cliente_asignado (
-	usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-	cliente_id BIGINT NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+	usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+	cliente_id UUID NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 	PRIMARY KEY (usuario_id, cliente_id)
 );
 
 CREATE TABLE IF NOT EXISTS categorias (
-	id BIGSERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	nombre VARCHAR(120) NOT NULL UNIQUE,
 	descripcion TEXT,
 	color VARCHAR(20) NOT NULL,
@@ -59,11 +56,11 @@ CREATE TABLE IF NOT EXISTS categorias (
 );
 
 CREATE TABLE IF NOT EXISTS productos (
-	id BIGSERIAL PRIMARY KEY,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 	nombre VARCHAR(180) NOT NULL,
 	sku VARCHAR(80) NOT NULL UNIQUE,
 	unidad VARCHAR(40) NOT NULL,
-	categoria_id BIGINT REFERENCES categorias(id) ON DELETE SET NULL,
+	categoria_id UUID REFERENCES categorias(id) ON DELETE SET NULL,
 	imagen_url TEXT,
 	activo BOOLEAN NOT NULL DEFAULT TRUE,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -71,18 +68,18 @@ CREATE TABLE IF NOT EXISTS productos (
 );
 
 CREATE TABLE IF NOT EXISTS visitas (
-	id BIGSERIAL PRIMARY KEY,
-	cliente_id BIGINT NOT NULL REFERENCES clientes(id) ON DELETE RESTRICT,
-	usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	cliente_id UUID NOT NULL REFERENCES clientes(id) ON DELETE RESTRICT,
+	usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
 	fecha DATE NOT NULL,
 	observaciones TEXT NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS inventario (
-	id BIGSERIAL PRIMARY KEY,
-	cliente_id BIGINT NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
-	producto_id BIGINT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	cliente_id UUID NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
+	producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
 	cantidad INTEGER NOT NULL CHECK (cantidad >= 0),
 	fecha_actualizacion DATE NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -91,8 +88,8 @@ CREATE TABLE IF NOT EXISTS inventario (
 );
 
 CREATE TABLE IF NOT EXISTS inventario_lotes (
-	id BIGSERIAL PRIMARY KEY,
-	inventario_id BIGINT NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
+	id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+	inventario_id UUID NOT NULL REFERENCES inventario(id) ON DELETE CASCADE,
 	lote VARCHAR(80) NOT NULL,
 	cantidad INTEGER NOT NULL CHECK (cantidad >= 0),
 	fecha_vencimiento DATE NOT NULL,

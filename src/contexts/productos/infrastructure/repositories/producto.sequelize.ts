@@ -22,7 +22,7 @@ export class ProductoSequelizeRepository implements ProductoRepository {
     nombre: string;
     sku: string;
     unidad: string;
-    categoria_id: number;
+    categoria_id: string;
     imagen_url?: string;
   }): Promise<ProductoEntity> {
     const row = await ProductoModel.create({ ...data, activo: true } as any);
@@ -30,12 +30,12 @@ export class ProductoSequelizeRepository implements ProductoRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: Partial<{
       nombre: string;
       sku: string;
       unidad: string;
-      categoria_id: number;
+      categoria_id: string;
       imagen_url: string | null;
       activo: boolean;
     }>
@@ -46,7 +46,7 @@ export class ProductoSequelizeRepository implements ProductoRepository {
     return ProductoEntity.fromPrimitives(row.get({ plain: true }));
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const row = await ProductoModel.findByPk(id);
     if (!row) return false;
     await row.destroy();

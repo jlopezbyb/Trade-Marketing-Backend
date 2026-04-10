@@ -3,7 +3,7 @@ import { UsuarioClienteModel } from '@src/contexts/shared/infrastructure/models/
 import { ClienteModel } from '@src/contexts/shared/infrastructure/models/trade/cliente.model';
 
 export interface UsersListItem {
-  id: number;
+  id: string;
   email: string;
   employee_code: string;
   nombre: string;
@@ -26,7 +26,7 @@ export class UsersSequelizeRepository {
     };
   }
 
-  async getById(id: number): Promise<UsersListItem | null> {
+  async getById(id: string): Promise<UsersListItem | null> {
     const row = await UserModel.findByPk(id);
     if (!row) return null;
     return row.get({ plain: true }) as UsersListItem;
@@ -44,7 +44,7 @@ export class UsersSequelizeRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     data: Partial<{
       email: string;
       employee_code: string;
@@ -60,7 +60,7 @@ export class UsersSequelizeRepository {
     return row.get({ plain: true }) as UsersListItem;
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     const row = await UserModel.findByPk(id);
     if (!row) return false;
     await row.destroy();
@@ -68,7 +68,7 @@ export class UsersSequelizeRepository {
   }
 
   // --- Asignación de clientes ---
-  async getClientesAsignados(usuarioId: number) {
+  async getClientesAsignados(usuarioId: string) {
     const rows = await UsuarioClienteModel.findAll({
       where: { usuario_id: usuarioId },
       include: [{ model: ClienteModel, attributes: ['id', 'nombre', 'cliente_code', 'direccion', 'telefono', 'contacto'] }]
@@ -79,7 +79,7 @@ export class UsersSequelizeRepository {
     });
   }
 
-  async asignarClientes(usuarioId: number, clienteIds: number[]) {
+  async asignarClientes(usuarioId: string, clienteIds: string[]) {
     await UsuarioClienteModel.destroy({ where: { usuario_id: usuarioId } });
     if (clienteIds.length === 0) return [];
     await UsuarioClienteModel.bulkCreate(clienteIds.map(cliente_id => ({ usuario_id: usuarioId, cliente_id })));

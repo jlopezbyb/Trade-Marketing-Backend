@@ -1,6 +1,7 @@
 import { Server } from '@src/server/server';
 import WinstonLogger from '@contexts/shared/infrastructure/WinstonLogger';
 import '@src/cron-cleanup';
+import '@src/cron-sync-productos';
 
 const server = new Server();
 const logger = new WinstonLogger();
